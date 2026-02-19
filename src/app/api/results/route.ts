@@ -7,13 +7,16 @@ import { getDemoRowsForClass } from "@/lib/demo-data";
 
 const querySchema = z.object({
   classId: z.string().min(1),
-  hajiraNo: z.string().optional(),
+  no: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
   const parsed = querySchema.safeParse({
     classId: request.nextUrl.searchParams.get("classId") ?? "",
-    hajiraNo: request.nextUrl.searchParams.get("hajiraNo") ?? undefined,
+    no:
+      request.nextUrl.searchParams.get("no") ??
+      request.nextUrl.searchParams.get("hajiraNo") ??
+      undefined,
   });
 
   if (!parsed.success) {
@@ -35,7 +38,7 @@ export async function GET(request: NextRequest) {
       ? getDemoRowsForClass(config.id)
       : await getSheetValues(config.spreadsheetId, config.range);
     const allResults = rowsToResults(rows as string[][]);
-    const students = filterResults(allResults, parsed.data.hajiraNo);
+    const students = filterResults(allResults, parsed.data.no);
 
     return NextResponse.json({
       classId: config.id,
