@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   color-scheme: light;
   --ink: #10212b;
@@ -100,6 +104,181 @@ main {
   margin: 10px 0 0;
   max-width: 72ch;
   color: rgba(249, 253, 255, 0.95);
+}
+
+.hero-location {
+  margin: 6px 0 0;
+  color: rgba(233, 248, 255, 0.95);
+  font-size: 0.92rem;
+}
+
+.landing,
+.listing {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.landing-hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  background: linear-gradient(140deg, #ffffff, #f0fbf8);
+  border: 1px solid #d7e7ee;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 28px rgba(10, 30, 45, 0.08);
+  margin-bottom: 18px;
+}
+
+.landing-kicker {
+  margin: 0;
+  color: #0a7a67;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+}
+
+.landing-hero h1 {
+  margin: 10px 0;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+}
+
+.landing-hero p {
+  margin: 0;
+  color: #3a5564;
+}
+
+.landing-search {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.landing-search input,
+.listing-search input {
+  border-radius: 10px;
+  border: 1px solid #c8d5dd;
+  padding: 11px 12px;
+  font-size: 0.95rem;
+  background: #ffffff;
+}
+
+.landing-search button,
+.listing-search button {
+  border-radius: 10px;
+  border: 1px solid #0f8c79;
+  background: #0f8c79;
+  color: #ffffff;
+  padding: 11px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.landing-actions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.landing-actions a {
+  text-decoration: none;
+  color: #0b6070;
+  border: 1px solid #bad8e1;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+.landing-hero-card {
+  border: 1px solid #c9e1dd;
+  background: linear-gradient(180deg, #eafaf4, #deefff);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.landing-hero-card h3 {
+  margin: 0 0 10px;
+}
+
+.landing-hero-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #34515f;
+}
+
+.landing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.madrasa-card {
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid #d7e2e9;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(10, 30, 45, 0.08);
+  transition: transform 0.16s ease;
+}
+
+.madrasa-card:hover {
+  transform: translateY(-2px);
+}
+
+.madrasa-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  background: #e3eef3;
+}
+
+.madrasa-card div {
+  padding: 12px;
+}
+
+.madrasa-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.madrasa-card p {
+  margin: 6px 0 4px;
+  color: #4e6573;
+}
+
+.madrasa-card small {
+  display: block;
+  color: #5f7480;
+  min-height: 36px;
+}
+
+.madrasa-card span {
+  display: inline-block;
+  margin-top: 10px;
+  color: #0c7f73;
+  font-weight: 700;
+}
+
+.listing-head {
+  margin-bottom: 16px;
+}
+
+.listing-head h1 {
+  margin: 0 0 8px;
+}
+
+.listing-search {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  max-width: 680px;
 }
 
 .search-grid {
@@ -465,6 +644,14 @@ tbody tr:hover {
 }
 
 @media (max-width: 980px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .search-grid {
     grid-template-columns: 1fr;
   }
@@ -479,6 +666,20 @@ tbody tr:hover {
 }
 
 @media (max-width: 640px) {
+  .landing,
+  .listing {
+    padding: 14px;
+  }
+
+  .landing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-search,
+  .listing-search {
+    grid-template-columns: 1fr;
+  }
+
   main {
     padding: 14px;
   }

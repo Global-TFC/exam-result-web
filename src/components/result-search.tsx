@@ -13,6 +13,8 @@ type Student = {
 };
 
 type ApiResponse = {
+  madrasaSlug?: string;
+  madrasaName?: string;
   classId: string;
   classLabel: string;
   count: number;
@@ -25,9 +27,22 @@ type ClassOption = {
   label: string;
 };
 
+type MadrasaHeader = {
+  slug: string;
+  name: string;
+  location: string;
+  image?: string;
+};
+
 const HERO_IMAGE_FALLBACK = "/madrasa.jpg";
 
-export function ResultSearch({ classes }: { classes: ClassOption[] }) {
+export function ResultSearch({
+  madrasa,
+  classes,
+}: {
+  madrasa: MadrasaHeader;
+  classes: ClassOption[];
+}) {
   const router = useRouter();
   const [classId, setClassId] = useState(classes[0]?.id ?? "");
   const [no, setNo] = useState("");
@@ -63,10 +78,11 @@ export function ResultSearch({ classes }: { classes: ClassOption[] }) {
     return no.trim() && data.students.length === 1 ? data.students[0] : null;
   }, [data, no]);
 
-  const heroImage = process.env.NEXT_PUBLIC_MADRASA_IMAGE_URL || HERO_IMAGE_FALLBACK;
+  const heroImage = madrasa.image || process.env.NEXT_PUBLIC_MADRASA_IMAGE_URL || HERO_IMAGE_FALLBACK;
 
   function buildQuery(targetClassId: string, targetNo: string) {
     const params = new URLSearchParams();
+    params.set("madrasaSlug", madrasa.slug);
     params.set("classId", targetClassId);
     if (targetNo.trim()) params.set("no", targetNo.trim());
     return params.toString();
@@ -75,7 +91,7 @@ export function ResultSearch({ classes }: { classes: ClassOption[] }) {
   function buildShareUrl(targetClassId: string, targetNo: string) {
     if (typeof window === "undefined") return "";
     const query = buildQuery(targetClassId, targetNo);
-    return `${window.location.origin}/?${query}`;
+    return `${window.location.origin}/${madrasa.slug}?${query}`;
   }
 
   function filterByNo(classData: ApiResponse, targetNo: string) {
@@ -94,7 +110,10 @@ export function ResultSearch({ classes }: { classes: ClassOption[] }) {
     const cached = classCacheRef.current[targetClassId];
     if (cached) return cached;
 
-    const params = new URLSearchParams({ classId: targetClassId });
+    const params = new URLSearchParams({
+      madrasaSlug: madrasa.slug,
+      classId: targetClassId,
+    });
     const response = await fetch(`/api/results?${params.toString()}`);
     const json = (await response.json()) as ApiResponse;
 
@@ -159,7 +178,7 @@ export function ResultSearch({ classes }: { classes: ClassOption[] }) {
     }
 
     hasHydratedFromUrl.current = true;
-  }, [classes]);
+  }, [classes, madrasa.slug]);
 
   useEffect(() => {
     prefetchClassData(classId);
@@ -184,7 +203,7 @@ export function ResultSearch({ classes }: { classes: ClassOption[] }) {
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     const query = buildQuery(classId, no);
-    router.replace(`/?${query}`, { scroll: false });
+    router.replace(`/${madrasa.slug}?${query}`, { scroll: false });
     await fetchResults(classId, no);
   }
 
@@ -242,13 +261,18 @@ export function ResultSearch({ classes }: { classes: ClassOption[] }) {
             />
             <div>
               <p className="hero-kicker">Academic Result Portal</p>
-              <h1>Madrasa Result Publishing</h1>
+              <h1>{madrasa.name}</h1>
+              <p className="hero-location">{madrasa.location}</p>
             </div>
           </div>
 
           <p>
             Select class and enter student No for individual result card. Leave No empty to view full class table.
           </p>
+
+          {classes.length === 0 ? (
+            <div className="status">X No classes are configured for this madrasa yet.</div>
+          ) : null}
 
           <form onSubmit={onSubmit} className="search-grid">
             <div className="field" ref={dropdownRef}>

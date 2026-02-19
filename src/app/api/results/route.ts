@@ -1,17 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getClassConfig } from "@/config/classes";
+import { getMadrasaBySlug, getMadrasaClassConfig } from "@/lib/madrasas";
 import { rowsToResults, filterResults } from "@/lib/results";
 import { getSheetValues } from "@/lib/sheets";
 import { getDemoRowsForClass } from "@/lib/demo-data";
 
 const querySchema = z.object({
+  madrasaSlug: z.string().min(1),
   classId: z.string().min(1),
   no: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
   const parsed = querySchema.safeParse({
+    madrasaSlug:
+      request.nextUrl.searchParams.get("madrasaSlug") ??
+      request.nextUrl.searchParams.get("madrasa") ??
+      "",
     classId: request.nextUrl.searchParams.get("classId") ?? "",
     no:
       request.nextUrl.searchParams.get("no") ??
@@ -21,12 +26,17 @@ export async function GET(request: NextRequest) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { message: "Invalid query. classId is required." },
+      { message: "Invalid query. madrasaSlug and classId are required." },
       { status: 400 },
     );
   }
 
-  const config = getClassConfig(parsed.data.classId);
+  const madrasa = getMadrasaBySlug(parsed.data.madrasaSlug);
+  if (!madrasa) {
+    return NextResponse.json({ message: "Madrasa not found." }, { status: 404 });
+  }
+
+  const config = getMadrasaClassConfig(parsed.data.madrasaSlug, parsed.data.classId);
   if (!config) {
     return NextResponse.json({ message: "Class not found." }, { status: 404 });
   }
@@ -41,6 +51,8 @@ export async function GET(request: NextRequest) {
     const students = filterResults(allResults, parsed.data.no);
 
     return NextResponse.json({
+      madrasaSlug: madrasa.slug,
+      madrasaName: madrasa.name,
       classId: config.id,
       classLabel: config.label,
       count: students.length,
