@@ -1,0 +1,32 @@
+[
+  {
+    "hajira_no": "1",
+    "student_name": "Abdullah",
+    "bangla": "78",
+    "english": "81",
+    "math": "89",
+    "science": "76",
+    "islamic_studies": "92",
+    "merit_position": "2"
+  },
+  {
+    "hajira_no": "2",
+    "student_name": "Yousuf",
+    "bangla": "88",
+    "english": "84",
+    "math": "90",
+    "science": "82",
+    "islamic_studies": "93",
+    "merit_position": "1"
+  },
+  {
+    "hajira_no": "3",
+    "student_name": "Ibrahim",
+    "bangla": "65",
+    "english": "70",
+    "math": "68",
+    "science": "72",
+    "islamic_studies": "79",
+    "merit_position": "3"
+  }
+]
