@@ -16,10 +16,118 @@
   --pass-bg: #def7ec;
   --fail: #b42318;
   --fail-bg: #ffe7e5;
+  --brand-1: #2f5bff;
+  --brand-2: #00b88a;
+  --brand-3: #ff7a59;
+  --brand-4: #f7b500;
 }
 
 * {
   box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: #f7f8fb;
+}
+
+.font-display {
+  font-family: var(--font-display), "Times New Roman", serif;
+}
+
+.font-body {
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+}
+
+.animated-gradient {
+  background: linear-gradient(120deg, #e9f2ff 0%, #fef7ec 35%, #e9fff7 70%, #ffffff 100%);
+  background-size: 180% 180%;
+  animation: gradientShift 16s ease infinite;
+}
+
+.radial-glow {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 999px;
+  filter: blur(80px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.flip-word-in.is-active .flip-letter {
+  animation: flipIn 420ms ease both;
+}
+
+.flip-word-out.is-active .flip-letter {
+  animation: flipOut 360ms ease both;
+}
+
+.flip-word-in.is-idle,
+.flip-word-out.is-idle {
+  opacity: 0;
+}
+
+.flip-letter {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+@keyframes flipIn {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) rotateX(-65deg);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes flipOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-16px) rotateX(70deg);
+    filter: blur(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-gradient {
+    animation: none;
+  }
 }
 
 /* ResultSearch page styles (restored after Tailwind migration) */

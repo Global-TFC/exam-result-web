@@ -1,98 +1,90 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, LayoutGroup } from "motion/react";
+import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export const FlipWords = ({
   words,
-  duration = 3000,
+  duration = 2500,
   className,
 }: {
   words: string[];
   duration?: number;
   className?: string;
 }) => {
-  const [currentWord, setCurrentWord] = useState(words[0]);
-  const [isAnimating, setIsAnimating] = useState<boolean>(false);
-
-  // thanks for the fix Julian - https://github.com/Julian-AT
-  const startAnimation = useCallback(() => {
-    const word = words[words.indexOf(currentWord) + 1] || words[0];
-    setCurrentWord(word);
-    setIsAnimating(true);
-  }, [currentWord, words]);
+  const safeWords = useMemo(() => words.filter(Boolean), [words]);
+  const [index, setIndex] = useState(0);
+  const [exiting, setExiting] = useState(false);
+  const [prev, setPrev] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAnimating)
-      setTimeout(() => {
-        startAnimation();
-      }, duration);
-  }, [isAnimating, duration, startAnimation]);
+    if (safeWords.length <= 1) return;
+
+    const interval = window.setInterval(() => {
+      setPrev(safeWords[index]);
+      setExiting(true);
+
+      window.setTimeout(() => {
+        setIndex((prevIndex) => (prevIndex + 1) % safeWords.length);
+        setExiting(false);
+      }, 260);
+    }, duration);
+
+    return () => window.clearInterval(interval);
+  }, [duration, index, safeWords]);
+
+  const current = safeWords[index] ?? "";
 
   return (
-    <AnimatePresence
-      onExitComplete={() => {
-        setIsAnimating(false);
-      }}
+    <span className="relative inline-flex px-1 align-baseline">
+      {prev ? (
+        <WordLetters
+          word={prev}
+          state="out"
+          active={exiting}
+          absolute
+          wordClass={className}
+        />
+      ) : null}
+      <WordLetters word={current} state="in" active={!exiting} wordClass={className} />
+    </span>
+  );
+};
+
+const WordLetters = ({
+  word,
+  state,
+  active,
+  absolute = false,
+  wordClass,
+}: {
+  word: string;
+  state: "in" | "out";
+  active: boolean;
+  absolute?: boolean;
+  wordClass?: string;
+}) => {
+  return (
+    <span
+      className={cn(
+        absolute ? "absolute left-0 top-0 inline-flex" : "inline-flex",
+        state === "out" ? "flip-word-out" : "flip-word-in",
+        active ? "is-active" : "is-idle"
+      )}
+      aria-hidden={state === "out"}
     >
-      <motion.div
-        initial={{
-          opacity: 0,
-          y: 10,
-        }}
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 100,
-          damping: 10,
-        }}
-        exit={{
-          opacity: 0,
-          y: -40,
-          x: 40,
-          filter: "blur(8px)",
-          scale: 2,
-          position: "absolute",
-        }}
-        className={cn(
-          "z-10 inline-block relative text-left text-neutral-900 dark:text-neutral-100 px-2",
-          className
-        )}
-        key={currentWord}
-      >
-        {/* edit suggested by Sajal: https://x.com/DewanganSajal */}
-        {currentWord.split(" ").map((word, wordIndex) => (
-          <motion.span
-            key={word + wordIndex}
-            initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{
-              delay: wordIndex * 0.3,
-              duration: 0.3,
-            }}
-            className="inline-block whitespace-nowrap"
-          >
-            {word.split("").map((letter, letterIndex) => (
-              <motion.span
-                key={word + letterIndex}
-                initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{
-                  delay: wordIndex * 0.3 + letterIndex * 0.05,
-                  duration: 0.2,
-                }}
-                className="inline-block"
-              >
-                {letter}
-              </motion.span>
-            ))}
-            <span className="inline-block">&nbsp;</span>
-          </motion.span>
-        ))}
-      </motion.div>
-    </AnimatePresence>
+      {word.split("").map((letter, index) => (
+        <span
+          key={`${letter}-${index}`}
+          className={cn(
+            "flip-letter bg-clip-text text-transparent",
+            wordClass,
+            "bg-gradient-to-b from-blue-600 via-blue-500 to-blue-800 shadow-smoke-500/50 pb-4"
+          )}
+          style={{ animationDelay: `${index * 40}ms` }}
+        >
+          {letter === " " ? "\u00A0" : letter}
+        </span>
+      ))}
+    </span>
   );
 };
