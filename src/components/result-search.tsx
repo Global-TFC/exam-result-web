@@ -50,6 +50,7 @@ export function ResultSearch({
   const [actionLoading, setActionLoading] = useState<"print" | "pdf" | "share" | null>(null);
   const [error, setError] = useState("");
   const [data, setData] = useState<ApiResponse | null>(null);
+  const [pulseResults, setPulseResults] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [shareMessage, setShareMessage] = useState("");
 
@@ -142,6 +143,8 @@ export function ResultSearch({
       const classData = await fetchClassData(targetClassId);
       const filtered = filterByNo(classData, targetNo);
       setData(filtered);
+      setPulseResults(true);
+      window.setTimeout(() => setPulseResults(false), 450);
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : "Could not load results.");
     } finally {
@@ -334,7 +337,14 @@ export function ResultSearch({
 
       {data ? (
         singleStudent ? (
-          <section className="student-card">
+          <section className={`student-card ${pulseResults ? "result-pulse" : ""}`}>
+            {singleStudent.finalResult?.toLowerCase().includes("pass") ? (
+              <div className="confetti confetti-page" aria-hidden="true">
+                {Array.from({ length: 36 }).map((_, index) => (
+                  <span key={`confetti-page-${index}`} className="confetti-piece" />
+                ))}
+              </div>
+            ) : null}
             <header className="student-card-head">
               <h2>{singleStudent.studentName || "Name"}</h2>
               <p>Annual Exam Result</p>
@@ -346,8 +356,11 @@ export function ResultSearch({
             </header>
 
             <div className="subject-card">
-              <h3>Subject-wise Results</h3>
-              <table>
+              <div className="subject-card-head">
+                <h3>Subject-wise Results</h3>
+                <span className="subject-card-chip">Detailed Marks</span>
+              </div>
+              <table className="subject-table">
                 <thead>
                   <tr>
                     <th>Subject</th>
@@ -377,9 +390,18 @@ export function ResultSearch({
             </div>
 
             <div className="final-status-wrap">
+              {singleStudent.finalResult?.toLowerCase().includes("pass") ? (
+                <div className="confetti" aria-hidden="true">
+                  {Array.from({ length: 18 }).map((_, index) => (
+                    <span key={`confetti-${index}`} className="confetti-piece" />
+                  ))}
+                </div>
+              ) : null}
               <span
                 className={`final-status ${
-                  singleStudent.finalResult?.toLowerCase().includes("pass") ? "final-status-pass" : "final-status-fail"
+                  singleStudent.finalResult?.toLowerCase().includes("pass")
+                    ? "final-status-pass final-status-pass-anim"
+                    : "final-status-fail"
                 }`}
               >
                 {singleStudent.finalResult || "-"}
@@ -439,7 +461,7 @@ export function ResultSearch({
             {shareMessage ? <p className="share-note no-print">{shareMessage}</p> : null}
           </section>
         ) : (
-          <section className="card table-wrap">
+          <section className={`card table-wrap ${pulseResults ? "result-pulse" : ""}`}>
             <div className="result-head">
               <h2>
                 {data.classLabel} - {data.count} result{data.count === 1 ? "" : "s"}
@@ -492,6 +514,16 @@ export function ResultSearch({
             )}
           </section>
         )
+      ) : loading ? (
+        <section className="card table-wrap result-skeleton">
+          <div className="skeleton-line w-60" />
+          <div className="skeleton-line w-40" />
+          <div className="skeleton-table">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={`skeleton-row-${index}`} className="skeleton-row" />
+            ))}
+          </div>
+        </section>
       ) : null}
     </>
   );
