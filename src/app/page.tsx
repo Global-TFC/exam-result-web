@@ -181,7 +181,7 @@ export default function InstitutionalResultPage() {
 
           <div className="grid gap-12">
             {/* Contact Info */}
-            <div className=" flex items-center justify-around gap-12 flex-wrap">
+            <div className="space-y-5 md:flex items-center justify-around gap-12 flex-wrap">
               <div className="flex items-start gap-4">
                 <div className="p-3 rounded-xl bg-emerald-100 text-emerald-600">
                   <MessageCircle size={24} />

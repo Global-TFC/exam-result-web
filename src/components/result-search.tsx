@@ -13,8 +13,6 @@ type Student = {
 };
 
 type ApiResponse = {
-  madrasaSlug?: string;
-  madrasaName?: string;
   classId: string;
   classLabel: string;
   count: number;
@@ -47,12 +45,10 @@ export function ResultSearch({
   const [classId, setClassId] = useState(classes[0]?.id ?? "");
   const [no, setNo] = useState("");
   const [loading, setLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState<"print" | "pdf" | "share" | null>(null);
   const [error, setError] = useState("");
   const [data, setData] = useState<ApiResponse | null>(null);
   const [pulseResults, setPulseResults] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [shareMessage, setShareMessage] = useState("");
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const hasHydratedFromUrl = useRef(false);
@@ -74,25 +70,13 @@ export function ResultSearch({
     return Array.from(ordered);
   }, [data]);
 
-  const singleStudent = useMemo(() => {
-    if (!data?.students?.length) return null;
-    return no.trim() && data.students.length === 1 ? data.students[0] : null;
-  }, [data, no]);
-
   const heroImage = madrasa.image || process.env.NEXT_PUBLIC_MADRASA_IMAGE_URL || HERO_IMAGE_FALLBACK;
 
-  function buildQuery(targetClassId: string, targetNo: string) {
+  function buildQuery(targetClassId: string, targetNo?: string) {
     const params = new URLSearchParams();
-    params.set("madrasaSlug", madrasa.slug);
     params.set("classId", targetClassId);
-    if (targetNo.trim()) params.set("no", targetNo.trim());
+    if (targetNo?.trim()) params.set("no", targetNo.trim());
     return params.toString();
-  }
-
-  function buildShareUrl(targetClassId: string, targetNo: string) {
-    if (typeof window === "undefined") return "";
-    const query = buildQuery(targetClassId, targetNo);
-    return `${window.location.origin}/${madrasa.slug}?${query}`;
   }
 
   function filterByNo(classData: ApiResponse, targetNo: string) {
@@ -137,7 +121,6 @@ export function ResultSearch({
     setLoading(true);
     setError("");
     setData(null);
-    setShareMessage("");
 
     try {
       const classData = await fetchClassData(targetClassId);
@@ -176,12 +159,18 @@ export function ResultSearch({
 
     if (classExists && classFromUrl) {
       setClassId(classFromUrl);
-      setNo(noFromUrl);
-      void fetchResults(classFromUrl, noFromUrl);
+      if (noFromUrl.trim()) {
+        router.replace(`/${madrasa.slug}/result?${buildQuery(classFromUrl, noFromUrl)}`, {
+          scroll: false,
+        });
+      } else {
+        setNo("");
+        void fetchResults(classFromUrl, "");
+      }
     }
 
     hasHydratedFromUrl.current = true;
-  }, [classes, madrasa.slug]);
+  }, [classes, madrasa.slug, router]);
 
   useEffect(() => {
     prefetchClassData(classId);
@@ -205,47 +194,14 @@ export function ResultSearch({
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const query = buildQuery(classId, no);
-    router.replace(`/${madrasa.slug}?${query}`, { scroll: false });
-    await fetchResults(classId, no);
-  }
-
-  async function onPrint() {
-    setActionLoading("print");
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    window.print();
-    setActionLoading(null);
-  }
-
-  async function onDownloadPdf() {
-    setActionLoading("pdf");
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    window.print();
-    setActionLoading(null);
-  }
-
-  async function onShare() {
-    setActionLoading("share");
-    const url = buildShareUrl(classId, no);
-    if (!url) {
-      setActionLoading(null);
+    if (no.trim()) {
+      router.push(`/${madrasa.slug}/result?${buildQuery(classId, no)}`);
       return;
     }
 
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "Madrasa Result",
-          text: "Student result link",
-          url,
-        });
-      } else {
-        await navigator.clipboard.writeText(url);
-        setShareMessage("Result link copied.");
-      }
-    } finally {
-      setActionLoading(null);
-    }
+    const query = buildQuery(classId);
+    router.replace(`/${madrasa.slug}?${query}`, { scroll: false });
+    await fetchResults(classId, "");
   }
 
   return (
@@ -270,7 +226,8 @@ export function ResultSearch({
           </div>
 
           <p>
-            Select class and enter student No for individual result card. Leave No empty to view full class table.
+            Select class and enter student No to open the student result page. Leave No empty to view full class
+            table here.
           </p>
 
           {classes.length === 0 ? (
@@ -336,184 +293,58 @@ export function ResultSearch({
       </section>
 
       {data ? (
-        singleStudent ? (
-          <section className={`student-card ${pulseResults ? "result-pulse" : ""}`}>
-            {singleStudent.finalResult?.toLowerCase().includes("pass") ? (
-              <div className="confetti confetti-page" aria-hidden="true">
-                {Array.from({ length: 36 }).map((_, index) => (
-                  <span key={`confetti-page-${index}`} className="confetti-piece" />
-                ))}
-              </div>
-            ) : null}
-            <header className="student-card-head">
-              <h2>{singleStudent.studentName || "Name"}</h2>
-              <p>Annual Exam Result</p>
-              <div className="student-head-meta">
-                <span>Name: {singleStudent.studentName || "-"}</span>
-                <span>No: {singleStudent.no || "-"}</span>
-                <span>Class: {data.classLabel}</span>
-              </div>
-            </header>
+        <section className={`card table-wrap ${pulseResults ? "result-pulse" : ""}`}>
+          <div className="result-head">
+            <h2>
+              {data.classLabel} - {data.count} result{data.count === 1 ? "" : "s"}
+            </h2>
+          </div>
 
-            <div className="subject-card">
-              <div className="subject-card-head">
-                <h3>Subject-wise Results</h3>
-                <span className="subject-card-chip">Detailed Marks</span>
-              </div>
-              <table className="subject-table">
-                <thead>
-                  <tr>
-                    <th>Subject</th>
-                    <th>Marks Obtained</th>
-                  </tr>
-                </thead>
-                <tbody>
+          {data.students.length === 0 ? (
+            <p>No student found for this query.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Name</th>
                   {subjectHeaders.map((subject) => (
-                    <tr key={`single-${subject}`}>
-                      <td>{subject}</td>
-                      <td>{singleStudent.subjects[subject] ?? "-"}</td>
-                    </tr>
+                    <th key={subject}>{subject}</th>
                   ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="summary-grid">
-              <div className="summary-box">
-                <span>Total Marks</span>
-                <strong>{singleStudent.total}</strong>
-              </div>
-              <div className="summary-box">
-                <span>Rank</span>
-                <strong>{singleStudent.meritPosition ?? "-"}</strong>
-              </div>
-            </div>
-
-            <div className="final-status-wrap">
-              {singleStudent.finalResult?.toLowerCase().includes("pass") ? (
-                <div className="confetti" aria-hidden="true">
-                  {Array.from({ length: 18 }).map((_, index) => (
-                    <span key={`confetti-${index}`} className="confetti-piece" />
-                  ))}
-                </div>
-              ) : null}
-              <span
-                className={`final-status ${
-                  singleStudent.finalResult?.toLowerCase().includes("pass")
-                    ? "final-status-pass final-status-pass-anim"
-                    : "final-status-fail"
-                }`}
-              >
-                {singleStudent.finalResult || "-"}
-              </span>
-            </div>
-
-            <div className="result-actions no-print">
-              <button
-                type="button"
-                className="action-btn"
-                onClick={onPrint}
-                disabled={actionLoading !== null}
-                aria-busy={actionLoading === "print"}
-              >
-                {actionLoading === "print" ? (
-                  <span className="btn-content">
-                    <span className="spinner spinner-light" aria-hidden="true" />
-                    Printing...
-                  </span>
-                ) : (
-                  "Print Result"
-                )}
-              </button>
-              <button
-                type="button"
-                className="action-btn action-btn-outline"
-                onClick={onDownloadPdf}
-                disabled={actionLoading !== null}
-                aria-busy={actionLoading === "pdf"}
-              >
-                {actionLoading === "pdf" ? (
-                  <span className="btn-content">
-                    <span className="spinner" aria-hidden="true" />
-                    Preparing PDF...
-                  </span>
-                ) : (
-                  "Download PDF"
-                )}
-              </button>
-              <button
-                type="button"
-                className="action-btn action-btn-outline"
-                onClick={onShare}
-                disabled={actionLoading !== null}
-                aria-busy={actionLoading === "share"}
-              >
-                {actionLoading === "share" ? (
-                  <span className="btn-content">
-                    <span className="spinner" aria-hidden="true" />
-                    Sharing...
-                  </span>
-                ) : (
-                  "Share Result"
-                )}
-              </button>
-            </div>
-            {shareMessage ? <p className="share-note no-print">{shareMessage}</p> : null}
-          </section>
-        ) : (
-          <section className={`card table-wrap ${pulseResults ? "result-pulse" : ""}`}>
-            <div className="result-head">
-              <h2>
-                {data.classLabel} - {data.count} result{data.count === 1 ? "" : "s"}
-              </h2>
-            </div>
-
-            {data.students.length === 0 ? (
-              <p>No student found for this query.</p>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>No</th>
-                    <th>Name</th>
+                  <th>Total</th>
+                  <th>Rank</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.students.map((student) => (
+                  <tr key={`${student.no}-${student.studentName}`}>
+                    <td>{student.no}</td>
+                    <td>{student.studentName}</td>
                     {subjectHeaders.map((subject) => (
-                      <th key={subject}>{subject}</th>
+                      <td key={`${student.no}-${subject}`}>{student.subjects[subject] ?? "-"}</td>
                     ))}
-                    <th>Total</th>
-                    <th>Rank</th>
-                    <th>Result</th>
+                    <td>{student.total}</td>
+                    <td>{student.meritPosition ?? "-"}</td>
+                    <td>
+                      {student.finalResult ? (
+                        <span
+                          className={`badge ${
+                            student.finalResult.toLowerCase().includes("pass") ? "badge-pass" : "badge-fail"
+                          }`}
+                        >
+                          {student.finalResult}
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {data.students.map((student) => (
-                    <tr key={`${student.no}-${student.studentName}`}>
-                      <td>{student.no}</td>
-                      <td>{student.studentName}</td>
-                      {subjectHeaders.map((subject) => (
-                        <td key={`${student.no}-${subject}`}>{student.subjects[subject] ?? "-"}</td>
-                      ))}
-                      <td>{student.total}</td>
-                      <td>{student.meritPosition ?? "-"}</td>
-                      <td>
-                        {student.finalResult ? (
-                          <span
-                            className={`badge ${
-                              student.finalResult.toLowerCase().includes("pass") ? "badge-pass" : "badge-fail"
-                            }`}
-                          >
-                            {student.finalResult}
-                          </span>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </section>
-        )
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
       ) : loading ? (
         <section className="card table-wrap result-skeleton">
           <div className="skeleton-line w-60" />
