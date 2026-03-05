@@ -273,7 +273,7 @@ export function ResultSearch({
 
             <div className="field">
               <label htmlFor="no">No (optional)</label>
-              <input id="no" value={no} onChange={(event) => setNo(event.target.value)} placeholder="e.g. 17" />
+              <input id="no" value={no} onChange={(event) => setNo(event.target.value)} placeholder="e.g. 1" />
             </div>
 
             <button className="cta" type="submit" disabled={loading || !classId} aria-busy={loading}>
