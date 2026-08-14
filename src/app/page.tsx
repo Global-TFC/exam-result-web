@@ -51,7 +51,7 @@ export default function InstitutionalResultPage() {
 
           {/* Highlighted WhatsApp Button */}
           <a
-            href="https://wa.me/919562695758?text=Hello%2C%20I%27m%20interested%20in%20ResultPublisher%20for%20our%20institution"
+            href="https://wa.me/919995079738?text=Hello%2C%20I%27m%20interested%20in%20ResultPublisher%20for%20our%20institution"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full shadow-lg shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95"
